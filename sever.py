@@ -1,5 +1,3 @@
-# python server.pyで起動する。
-
 from flask import Flask, render_template, request
 from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.models import load_model
@@ -9,6 +7,8 @@ from datetime import datetime
 import os
 import cv2
 import pandas as pd
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -29,11 +29,12 @@ def upload_file():
     if request.method == "POST":
         # アプロードされたファイルをいったん保存する
         f = request.files["file"]
-        filepath = "./static/" + datetime.now().strftime("%Y%m%d%H%M%S") + ".png"
-        f.save(filepath)
+        #filepath = "./static/" + datetime.now().strftime("%Y%m%d%H%M%S") + ".png"
+        #f.save(filepath)
         # 画像ファイルを読み込む
         # 画像ファイルをリサイズ
-        input_img = load_img(filepath, target_size=(299, 299))
+        input_img = load_img(f, target_size=(299, 299))
+        
         # 猫の種別を調べる関数の実行
         result = examine_cat_breeds(input_img, model, cat_list)
         print("result")
@@ -47,10 +48,22 @@ def upload_file():
         no2_cat_pred = result[1,1]
         no3_cat_pred = result[2,1]
 
-        return render_template("index.html", filepath=filepath, 
+        # 画像書き込み用バッファを確保
+        buf = BytesIO()
+        # 画像データをバッファに書き込む
+        input_img.save(buf,format="png")
+
+        # バイナリデータをbase64でエンコード
+        # utf-8でデコード
+        input_img_b64str = base64.b64encode(buf.getvalue()).decode("utf-8") 
+
+        # 付帯情報を付与する
+        input_img_b64data = "data:image/png;base64,{}".format(input_img_b64str) 
+
+        # HTMLに渡す
+        return render_template("index.html", input_img_b64data=input_img_b64data, 
         no1_cat=no1_cat, no2_cat=no2_cat, no3_cat=no3_cat,
         no1_cat_pred=no1_cat_pred, no2_cat_pred=no2_cat_pred, no3_cat_pred=no3_cat_pred)
 
 if __name__ == '__main__':
-    app.debug = True
-    app.run(host='localhost', port=5000)
+    app.run(host="0.0.0.0")
