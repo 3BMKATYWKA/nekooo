@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+   <body>
+      {% if no1_cat %}
+      <img src="{{input_img_b64data}}" border="1" ><br>
+      予測結果<br>
+      {{no1_cat}}:{{no1_cat_pred}}<br>
+      {{no2_cat}}:{{no2_cat_pred}}<br>
+      {{no3_cat}}:{{no3_cat_pred}}<br>
+      <hr>
+      {% endif %}
+      ファイルを選択して送信してください<br>
+      <form action = "./" method = "POST" 
+         enctype = "multipart/form-data">
+         <input type = "file" name = "file" />
+         <input type = "submit"/>
+      </form>
+   </body>
+</html>
