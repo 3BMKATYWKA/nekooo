@@ -1,1 +1,1 @@
-gunicorn -b 0.0.0.0:$PORT --chdir nekooo main:app
+gunicorn -b 0.0.0.0:5000 --chdir nekooo main:app
