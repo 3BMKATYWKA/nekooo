@@ -5,7 +5,7 @@ import numpy as np
 from image_process import examine_cat_breeds
 from datetime import datetime
 import os
-import cv2
+# import cv2
 import pandas as pd
 import base64
 from io import BytesIO
