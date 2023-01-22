@@ -1,0 +1,147 @@
+/**
+ * フォルダ一内のファイル全て値貼り付け
+ */
+function getfilename_and_allfilesAtaiharitsuke() {
+
+  // 変数設定
+  // フォルダID記載位置設定
+  var folderIdRow = 3;
+  var folderIdCol = 2;
+
+  // ファイル書き込み位置設定
+  var fileWriteStartRow = 3;
+  var fileWriteStartCol = 4;
+
+  // 既存ファイル反映セルクリア範囲設定
+  var fileWriteEndRow = 1000;
+
+  // スクリプトを埋めているスプレッドシート取得
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var activeSheet = ss.getSheetByName('シート1');
+
+  // 指定フォルダURL取得
+  var folderURL = activeSheet.getRange(folderIdRow, folderIdCol).getValues()[0][0];
+
+  // 指定フォルダURLからフォルダID取得
+  var folderId = folderURL.split("/folders/")[1].split("/")[0];
+
+  //末代までのフォルダ情報取得用変数
+  // 親フォルダ＝指定フォルダ
+  var key = folderId;
+  //var nowdir = key;
+  //子～末代までのフォルダ数
+  var totalcount=0;
+
+  //var Cell = [];
+  var fileNames = new Array();
+  var fileIDs = new Array();
+
+  
+  // //親フォルダ直下のファイルの名前とIDを格納
+  // //★
+  // var folder_inf = DriveApp.getFolderById(folderId);
+  // //Logger.log(folder_inf.getName());
+  // var files = folder_inf.getFiles();
+  // while(files.hasNext()){
+  //   const file = files.next();
+  //   fileNames.push(file.getName());
+  //   fileIDs.push(file.getId());
+  // }
+
+  //フラグ類
+  var subfolderflag = 0;  //1なら有り、0なら無し。
+
+  //次にフォルダがあるか検索し、あった場合にはフォルダリスト配列にフォルダIDを格納する
+  var folderIdlist = new Array();
+  //var folders = DriveApp.searchFolders("'"+key+"' in parents");
+  //var filelist = new Array();
+
+  get_childfilesfolders(folderId, fileNames, fileIDs, folderIdlist);
+
+  if(folderIdlist.length == 0){
+
+    //子フォルダが無い場合
+
+  }else{
+
+    //子フォルダがある場合
+    
+    //サブフォルダフラグを立てる
+    subfolderflag=1;
+
+    while(subfolderflag == 1){
+      var nowponyo = folderIdlist.length;
+      for(var i = 0; i < nowponyo; i++){
+        get_childfilesfolders(folderIdlist[0], fileNames, fileIDs, folderIdlist);
+        //配列0番目を削除と詰める
+        folderIdlist.splice(0,1);
+      }
+      //folderIdlistが空なら末代まで探索完了→subfolderflagを0にする
+      if(folderIdlist.length == 0){
+        subfolderflag=0;
+      }
+    }
+  } 
+
+  // 書き込む前にセルをクリア
+  activeSheet.getRange(fileWriteStartRow, fileWriteStartCol, fileWriteEndRow, 1).clear();
+  // スプレッドシート反映
+  Logger.log(fileNames);
+  //fileNames[0].map((col, i) => array.map(row => row[i]));
+  //var fileNames2 = transpose(fileNames);
+  //activeSheet.getRange(fileWriteStartRow, fileWriteStartCol, fileNames.length, 1).setValues(fileNames);
+  //Logger.log(fileNames2);
+  
+  // 指定フォルダ内のファイル全てに対して値貼り付けする
+  fileIDs.forEach(AllSheetsAtaiharitsuke);
+
+}
+
+/* ① 行・列を入れ替える転置関数 */
+//const transpose = a=> a[0].map((_, c) => a.map(r => r[c]));
+//const transpose = a=> a[0].map((_, c) => a.map(r => r));
+
+//parents_folderId（親フォルダID）から
+//子ファイル名(fileNames),ID(fileIDs)、子フォルダID(folderlist)を追加
+function get_childfilesfolders(parents_folderId, fileNames, fileIDs, folderIdlist) {
+
+  //親フォルダ直下の子ファイルの名前とIDを格納
+  //★
+  var folder_inf = DriveApp.getFolderById(parents_folderId);
+  //Logger.log(folder_inf.getName());
+  var files = folder_inf.getFiles();
+  while(files.hasNext()){
+    const file = files.next();
+    fileNames.push(file.getName());
+    fileIDs.push(file.getId());
+  }
+
+  //親フォルダ直下の子フォルダのIDを格納
+  var key = parents_folderId;
+  var folders = DriveApp.searchFolders("'"+key+"' in parents");
+  //folderIdlistシートへ書き込み
+  if(folders.hasNext()==true){
+    while(folders.hasNext()){
+      var folder = folders.next();
+      folderIdlist.push(folder.getId());
+      //totalcount++;
+    }
+  } 
+
+}
+
+//引数：ファイルID、ファイル内の全シートに対して取得値貼り付けを繰り返す関数
+function AllSheetsAtaiharitsuke(value) {
+
+  var ss = SpreadsheetApp.openById(value);
+  var sheeets = ss.getSheets();
+
+  sheeets.forEach(function(sheet){
+
+    var rows = sheet.getLastRow();
+    var columns = sheet.getLastColumn();
+    var range = sheet.getRange(1,1,rows,columns);
+    range.copyTo(range,{contentsOnly:true});
+  });
+
+}
